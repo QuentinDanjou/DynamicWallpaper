@@ -13,9 +13,10 @@ WIN_DRIVE = "C:\\"
 WIN_FOLDER = "Utilisateurs\\quent\\Images\\DynamicWallpaper"
 UNI_FOLDER = ""
 LOCATION = "Beijing"
+LOCATION_GMT = 6
 API_KEY = "69672045099f49c86d7d612f0a6ce9b2"
 
-MOMENTS = {"DAY": 1, "NIGHT": 1, "MORNING": 3, "AFTERNOON": 2, "EVENING":3}
+MOMENTS = {"DAY": 1, "NIGHT": 1, "SUNSET": 3, "MORNING": 2, "AFTERNOON": 2, "SUNRISE":3}
 
 
 def set_os_attribute():
@@ -50,10 +51,11 @@ def get_previous_sunrise_sunset():
         print("Problem occur during sunrise/sunset data acquisition. \
         Your location may haven't been found. \
         Please check your location or your internet connection.", file=sys.stderr)
+        exit(1)
         return None
-    sunrise = datetime.datetime.fromtimestamp(data["sys"]["sunrise"])
-    sunset = datetime.datetime.fromtimestamp(data["sys"]["sunset"])
-    return [sunrise, sunset]
+    sunrise = datetime.datetime.fromtimestamp(data["sys"]["sunrise"] + 3600 * LOCATION_GMT)
+    sunset = datetime.datetime.fromtimestamp(data["sys"]["sunset"] + 3600 * LOCATION_GMT)
+    return [sunrise.hour * 60 + sunrise.minute, sunset.hour * 60 + sunset.minute]
 
 def get_time_moment():
     """
@@ -65,9 +67,23 @@ def get_available_moment():
     """
     Compute and return the moment of the day.
     """
+    res = []
     actual_time = datetime.datetime.now()
-
-    return ["NOPE"]
+    actual_time_in_min = actual_time.hour * 60 + actual_time.minute
+    sun_data_in_min = get_previous_sunrise_sunset()
+    if actual_time_in_min <= sun_data_in_min[0] + 60 and actual_time_in_min >= sun_data_in_min[1] - 60:
+        res.append("SUNRISE")
+    elif actual_time_in_min <= sun_data_in_min[1] + 60 and actual_time_in_min >= sun_data_in_min[1] - 60:
+        res.append("SUNSET")
+    if actual_time_in_min <= 12 * 60 and actual_time_in_min > sun_data_in_min[0]:
+        res.append("MORNING")
+    elif actual_time_in_min >= 12 * 60 and actual_time_in_min < sun_data_in_min[1]:
+        res.append("AFTERNOON")
+    if actual_time_in_min < sun_data_in_min[0] or actual_time_in_min > sun_data_in_min[1]:
+        res.append("NIGHT")
+    else:
+        res.append("DAY")
+    return res
 
 def choose_moment(moment_list):
     """
