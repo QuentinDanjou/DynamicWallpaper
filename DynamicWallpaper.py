@@ -15,7 +15,7 @@ WIN_DRIVE = "C:\\"
 WIN_FOLDER = "Users\\quent\\Pictures\\DynamicWallpaper"
 UNI_FOLDER = ""
 LOCATION = "Beijing"
-LOCATION_GMT = 6
+LOCATION_GMT = 8
 API_KEY = "69672045099f49c86d7d612f0a6ce9b2"
 
 MOMENTS = {"DAY": 1, "NIGHT": 1, "SUNSET": 3, "MORNING": 2, "AFTERNOON": 2, "SUNRISE":3}
@@ -58,9 +58,15 @@ def get_previous_sunrise_sunset():
         Please check your location or your internet connection.", file=sys.stderr)
         exit(1)
         return None
-    sunrise = datetime.datetime.fromtimestamp(data["sys"]["sunrise"] + 3600 * LOCATION_GMT)
-    sunset = datetime.datetime.fromtimestamp(data["sys"]["sunset"] + 3600 * LOCATION_GMT)
-    return [sunrise.hour * 60 + sunrise.minute, sunset.hour * 60 + sunset.minute]
+    print(data["sys"]["sunrise"])
+    print(data["sys"]["sunset"])
+    sunrise = datetime.datetime.utcfromtimestamp(data["sys"]["sunrise"])
+    sunset = datetime.datetime.utcfromtimestamp(data["sys"]["sunset"])
+    print("sunrise: " + str(sunrise.hour) + ":" + str(sunrise.minute))
+    print("sunset: " + str(sunset.hour) + ":" + str(sunset.minute))
+    sunrise_conv = (sunrise.hour * 60 + sunrise.minute + 60 * LOCATION_GMT) % 1440
+    sunset_conv = (sunset.hour * 60 + sunset.minute + 60 * LOCATION_GMT) % 1440
+    return [sunrise_conv, sunset_conv]
 
 def get_time_moment():
     """
@@ -76,6 +82,8 @@ def get_available_moment():
     actual_time = datetime.datetime.now()
     actual_time_in_min = actual_time.hour * 60 + actual_time.minute
     sun_data_in_min = get_previous_sunrise_sunset()
+    print("Previous sunrise, sunset:")
+    print(sun_data_in_min)
     if actual_time_in_min <= sun_data_in_min[0] + 60 \
     and actual_time_in_min >= sun_data_in_min[1] - 60:
         res.append("SUNRISE")
@@ -107,7 +115,7 @@ def set_wallpaper(sys_options, moment):
     all_paths = glob.glob(os.path.join(sys_options[1], moment, "*"))
     # No file checking for the moment.
     print(all_paths)
-    if len(all_paths) == 0:
+    if not all_paths:
         return False
     choosen_imgpath = all_paths[random.randint(0, len(all_paths) - 1)]
     if sys_options[0] == "windows":
@@ -120,15 +128,15 @@ def set_wallpaper(sys_options, moment):
 if __name__ == "__main__":
     print("STARTING")
     succeed = False
-    sys_options = set_os_attribute()
+    SYS_OPTIONS = set_os_attribute()
     print("OPTIONS DONE")
-    print(sys_options)
+    print(SYS_OPTIONS)
     loop_protection = 0
     while succeed is False:
         loop_protection += 1
-        moment = get_time_moment()
-        print(moment)
-        succeed = set_wallpaper(sys_options, moment)
+        result_moment = get_time_moment()
+        print(result_moment)
+        succeed = set_wallpaper(SYS_OPTIONS, result_moment)
         if loop_protection > 20:
             print("Can't find a wallpaper.", file=sys.stderr)
             exit(1)
