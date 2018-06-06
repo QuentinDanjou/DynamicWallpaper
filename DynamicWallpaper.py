@@ -16,7 +16,7 @@ WIN_FOLDER = "Users\\quent\\Pictures\\DynamicWallpaper"
 UNI_FOLDER = ""
 LOCATION = "Beijing"
 LOCATION_GMT = 8
-API_KEY = "69672045099f49c86d7d612f0a6ce9b2"
+API_KEY = ""
 
 MOMENTS = {"DAY": 1, "NIGHT": 1, "SUNSET": 3, "MORNING": 2, "AFTERNOON": 2, "SUNRISE":3}
 
